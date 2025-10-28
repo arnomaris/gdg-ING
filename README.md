@@ -124,7 +124,7 @@ The `chunks` folder contains segmented content from ing.be:
 
 ## Getting Started
 1. Clone this repository
-2. Review the data structure in `ing_be_extracts/`
+2. Review the data structure in `synthetic_data/`
 3. Explore website content in `chunks/`
 4. Set up your development environment
 5. Start building your voice assistant solution
