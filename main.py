@@ -18,7 +18,7 @@ load_dotenv(dotenv_path)
 def setup_client(api_key):
     return genai.Client(api_key=api_key)
 
-async def fetch_ai_response(client, turns, relevant_info, customer_data, products, transactions):
+async def fetch_ai_response(client, language, turns, relevant_info, customer_data, products, transactions):
     """
     Fetch AI chat response audio from Gemini Live chat.
     'turns' is a list of dicts with format:
@@ -57,17 +57,21 @@ async def fetch_ai_response(client, turns, relevant_info, customer_data, product
         When asked about transactions, use data as ordering.
         
         Never give information if the customer_id does not match with the provided data.
-        """
+    """
+
+    language_code = 'nl-Nl'
+    if language == 'nl':
+        language_code = 'nl-NL'
+    elif language == 'fr':
+        language_code = 'fr-Fr'
+    elif language == 'en':
+        language_code = 'en-US'
 
     config = types.LiveConnectConfig(
         response_modalities = ["AUDIO"],
+        speech_config = types.SpeechConfig(language_code=language_code),
         system_instruction = prompt,
-        context_window_compression=(
-            # Configures compression with default parameters.
-            types.ContextWindowCompressionConfig(
-                sliding_window=types.SlidingWindow(),
-            )
-        ),
+        input_audio_transcription = types.AudioTranscriptionConfig(),
     )
 
     async with client.aio.live.connect(model="gemini-live-2.5-flash-preview", config=config) as session:
@@ -80,6 +84,11 @@ async def fetch_ai_response(client, turns, relevant_info, customer_data, product
         async for response in session.receive():
             if response.data is not None:
                 wf.writeframes(response.data)
+            if response.server_content.input_transcription:
+                st.session_state.conversation.append({
+                    "role": "assistant",
+                    "text": response.server_content.input_transcription.text
+                })
 
     wf.close()
     audio_buffer.seek(0)
@@ -158,7 +167,7 @@ def main():
 
                 relevant = retrieve_relevant_info(transcription, language)
                 with st.spinner("Answering"):
-                    ai_response = asyncio.run(fetch_ai_response(client, st.session_state.conversation, relevant, customer_data, products, transactions))
+                    ai_response = asyncio.run(fetch_ai_response(client, language, st.session_state.conversation, relevant, customer_data, products, transactions))
                     st.audio(ai_response, format="audio/wav")
 
 

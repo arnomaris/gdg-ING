@@ -73,7 +73,6 @@ def get_customer_data(customer_id: str):
     if customer:
         products = get_customer_products(customer_id)
         transactions = get_customer_transactions(customer_id)
-        print(transactions)
 
         return customer, products, transactions
     return None
