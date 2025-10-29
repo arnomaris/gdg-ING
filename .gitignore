@@ -1,2 +1,4 @@
 10. Hackathon_Leuven_2025/
 .idea/
+.env
+.venv/
