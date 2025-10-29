@@ -10,5 +10,4 @@ conn = duckdb.connect("../banking_data.duckdb")
 conn.execute(f"CREATE OR REPLACE TABLE customers AS SELECT * FROM read_csv('{synthetic_data}/customers.csv')")
 conn.execute(f"CREATE OR REPLACE TABLE products AS SELECT * FROM read_csv('{synthetic_data}/products.csv')")
 conn.execute(f"CREATE OR REPLACE TABLE transactions AS SELECT * FROM read_csv('{synthetic_data}/transactions.csv')")
-
-conn.table('customers').show()
+# conn.execute(f"ALTER TABLE products ALTER COLUMN product_id SET DATA TYPE VARCHAR;")

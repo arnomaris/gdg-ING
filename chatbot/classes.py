@@ -41,6 +41,8 @@ class Transaction:
         self.description = ""
         self.transaction_type = ""
 
+    def __str__(self):
+        return f"transaction_id: {self.transaction_id}, type: {self.transaction_type}, product_id: {self.product_id}, date: {self.date}, amount: {self.amount}{self.currency}, description: {self.description}"
 
 @dataclass
 class Customer:

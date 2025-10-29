@@ -3,12 +3,11 @@ from sentence_transformers import SentenceTransformer
 
 from chatbot.classes import Customer, Product, Transaction
 
-db_path = "../banking_data.duckdb"
+db_path = "banking_data.duckdb"
 
 model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
 
 conn = duckdb.connect(db_path)
-conn.execute("INSTALL vss;")
 conn.execute("LOAD vss;")
 conn.execute("SET GLOBAL hnsw_enable_experimental_persistence = true;")
 
@@ -52,7 +51,7 @@ def get_customer_products(customer_id: str):
     return products
 
 def get_customer_transactions(customer_id: str):
-    sql = "SELECT transaction_id, product_id, data, amount, amount, currency, description, transaction_type FROM products JOIN transactions ON transactions.product_id = products.product_id WHERE customer_id = $customer_id"
+    sql = "SELECT transactions.transaction_id, transactions.product_id, date, amount, amount, currency, description, transaction_type FROM products JOIN transactions ON transactions.product_id = products.product_id WHERE customer_id = $customer_id"
     result = conn.execute(sql, {"customer_id": customer_id}).fetchall()
 
     transactions = []
@@ -60,13 +59,24 @@ def get_customer_transactions(customer_id: str):
         transaction = Transaction()
         transaction.transaction_id = row[0]
         transaction.product_id = row[1]
-        transaction.data = row[2]
+        transaction.date = row[2]
         transaction.amount = row[3]
         transaction.currency = row[4]
         transaction.description = row[5]
         transaction.transaction_type = row[6]
+        transactions.append(transaction)
 
     return transactions
+
+def get_customer_data(customer_id: str):
+    customer = get_customer(customer_id)
+    if customer:
+        products = get_customer_products(customer_id)
+        transactions = get_customer_transactions(customer_id)
+        print(transactions)
+
+        return customer, products, transactions
+    return None
 
 def retrieve_relevant_info(query: str, language: str = 'nl', top_k: int = 1):
     """Retrieve relevant banking information using HNSW index"""
@@ -85,5 +95,3 @@ def retrieve_relevant_info(query: str, language: str = 'nl', top_k: int = 1):
                            """, [query_embedding.tolist(), language, query_embedding.tolist(), top_k]).fetchall()
 
     return [r[1] for r in results]
-
-print(get_customer_transactions("1001"))

@@ -3,7 +3,6 @@ import pandas as pd
 from sentence_transformers import SentenceTransformer
 import os
 
-
 # Connect to DuckDB
 conn = duckdb.connect("../banking_data.duckdb")
 
@@ -11,7 +10,6 @@ conn = duckdb.connect("../banking_data.duckdb")
 conn.execute("INSTALL vss;")
 conn.execute("LOAD vss;")
 conn.execute("SET GLOBAL hnsw_enable_experimental_persistence = true;")
-
 
 # Initialize
 model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
