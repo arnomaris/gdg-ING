@@ -1,6 +1,8 @@
 import duckdb
 from sentence_transformers import SentenceTransformer
 
+from chatbot.classes import Customer, Product, Transaction
+
 db_path = "../banking_data.duckdb"
 
 model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
@@ -10,23 +12,63 @@ conn.execute("INSTALL vss;")
 conn.execute("LOAD vss;")
 conn.execute("SET GLOBAL hnsw_enable_experimental_persistence = true;")
 
-def get_customer(customer_id: int):
-    sql = "SELECT * FROM customers WHERE user_id =:user_id"
-    result = conn.execute(sql, {"user_id": customer_id})
+def get_customer(customer_id: str):
+    sql = "SELECT * FROM customers WHERE customer_id = $customer_id"
+    result = conn.execute(sql, {"customer_id": customer_id}).fetchall()
 
-    for row in result.fetchall():
-        return row
+    if len(result) == 0:
+        return None
 
-    return None
+    data = result[0]
 
-def get_customer_products(customer_id: int):
-    sql = "SELECT * FROM products WHERE customer_id =:customer_id"
-    result = conn.execute(sql, {"customer_id": customer_id})
+    customer = Customer()
+    customer.customer_id = data[0]
+    customer.name = data[1]
+    customer.birth_date = data[2]
+    customer.email = data[3]
+    customer.phone = data[4]
+    customer.address = data[5]
+    customer.segment_code = data[6]
 
-    for row in result.fetchall():
-        return row
+    return customer
 
-def retrieve_relevant_info(query: str, language: str = 'nl', top_k: int = 3):
+def get_customer_products(customer_id: str):
+    sql = "SELECT * FROM products WHERE customer_id = $customer_id"
+    result = conn.execute(sql, {"customer_id": customer_id}).fetchall()
+
+    if len(result) == 0:
+        return None
+
+    products = []
+    for row in result:
+        product = Product()
+        product.product_id = row[0]
+        product.name = row[2]
+        product.product_type = row[3]
+        product.opened_date = row[4]
+        product.status = row[5]
+        products.append(product)
+
+    return products
+
+def get_customer_transactions(customer_id: str):
+    sql = "SELECT transaction_id, product_id, data, amount, amount, currency, description, transaction_type FROM products JOIN transactions ON transactions.product_id = products.product_id WHERE customer_id = $customer_id"
+    result = conn.execute(sql, {"customer_id": customer_id}).fetchall()
+
+    transactions = []
+    for row in result:
+        transaction = Transaction()
+        transaction.transaction_id = row[0]
+        transaction.product_id = row[1]
+        transaction.data = row[2]
+        transaction.amount = row[3]
+        transaction.currency = row[4]
+        transaction.description = row[5]
+        transaction.transaction_type = row[6]
+
+    return transactions
+
+def retrieve_relevant_info(query: str, language: str = 'nl', top_k: int = 1):
     """Retrieve relevant banking information using HNSW index"""
 
     # Generate query embedding
@@ -40,9 +82,8 @@ def retrieve_relevant_info(query: str, language: str = 'nl', top_k: int = 3):
                            WHERE language = ?
                            ORDER BY array_cosine_distance(embedding::DOUBLE[768], ?::DOUBLE[768]) ASC
                                LIMIT ?
-                           """, [query_embedding.tolist(), language, query_embedding.tolist(), top_k]).fetchdf()
+                           """, [query_embedding.tolist(), language, query_embedding.tolist(), top_k]).fetchall()
 
-    return results
+    return [r[1] for r in results]
 
-
-print(retrieve_relevant_info("How do I setup faceid", language='en').)
+print(get_customer_transactions("1001"))
