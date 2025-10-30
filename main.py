@@ -71,7 +71,7 @@ async def fetch_ai_response(client, language, turns, relevant_info, customer_dat
         response_modalities = ["AUDIO"],
         speech_config = types.SpeechConfig(language_code=language_code),
         system_instruction = prompt,
-        input_audio_transcription = types.AudioTranscriptionConfig(),
+        output_audio_transcription = {},
     )
 
     async with client.aio.live.connect(model="gemini-live-2.5-flash-preview", config=config) as session:
@@ -84,10 +84,10 @@ async def fetch_ai_response(client, language, turns, relevant_info, customer_dat
         async for response in session.receive():
             if response.data is not None:
                 wf.writeframes(response.data)
-            if response.server_content.input_transcription:
+            if response.server_content.output_transcription is not None:
                 st.session_state.conversation.append({
-                    "role": "assistant",
-                    "text": response.server_content.input_transcription.text
+                    "role": "model",
+                    "parts": [{"text": response.server_content.output_transcription.text}]
                 })
 
     wf.close()
