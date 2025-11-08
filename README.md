@@ -1,4 +1,4 @@
-# Aida Voice Assistant
+# IDA Voice Assistant
 A voice assistant for ING, developed as the winning solution at the AI Accelerate Hack hosted by the Google Developer Group KU Leuven.
 
 ## Overview
