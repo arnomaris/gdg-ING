@@ -63,7 +63,7 @@ async def fetch_ai_response(client, language, turns, relevant_info, customer_dat
     if language == 'nl':
         language_code = 'nl-NL'
     elif language == 'fr':
-        language_code = 'fr-Fr'
+        language_code = 'fr-FR'
     elif language == 'en':
         language_code = 'en-US'
 
@@ -125,7 +125,6 @@ async def transcribe_audio_stream(client, audio_bytes: bytes):
 
     return response.text.strip()
 
-iteration = 0
 def main():
     if not os.getenv("GEMINI_KEY"):
         st.sidebar.title("API KEY CONFIGURATION")
